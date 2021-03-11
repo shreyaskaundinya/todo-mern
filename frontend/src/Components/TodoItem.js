@@ -17,7 +17,7 @@ function TodoItem(props) {
             style={props.checked ? StrikeOut : {}}
             actions = {[
                 <EditTwoTone twoToneColor={props.edit ? "#32a52e" : "#bc163a"} name="edit" onClick={handleEdit}/>,
-                <Checkbox onChange={(e) => props.ToggleCheck(props.id)}>Done?</Checkbox>
+                <Checkbox checked={props.checked} onChange={(e) => props.ToggleCheck(props.id)}>Done?</Checkbox>
             ]}
         >
         <p>{props.edit ? <Input onChange={(e) => props.ChangeBody(e, props.id)} value={props.body}/> : props.body}</p>

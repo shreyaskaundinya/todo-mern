@@ -1,7 +1,7 @@
-import React, {useState} from 'react'
+import React, {useState, useEffect} from 'react'
 import TodoItem from './TodoItem'
-import {Layout, Typography, Row, Col, Form, Input, Button} from 'antd'
-
+import {Layout, Typography, Row, Col, Form, Input, Button, Space} from 'antd'
+import axios from 'axios'
 const {Header, Content} = Layout;
 const {Title,} = Typography;
 
@@ -17,25 +17,66 @@ const ButtonLayout = {
 
 function TodoList() {
     const [List, setList] = useState([])
-
-    // form finish
-    const onFinish = (item) => {
-        setList(List.concat([{id:List.length, title: item.title, body:item.body, checked:false, edit: false}]))
+    
+    const getAllTodos = async (e) => {
+        await axios.get('http://localhost:4000/Todos/')
+        .then((res) => {
+            setList(res.data.allTodos)
+        }).catch((error) => {
+            console.log(error)
+        })
     }
 
-    var ToggleCheck = (id) => {
+    useEffect (() => {
+        console.log("useEffect")
+    })
+
+    // form finish
+    const onAdd = async (item) => {
+        const newTodo = {title: item.title, body:item.body, checked:false}
+        // add new todo item
+        const response = await axios.put('http://localhost:4000/Todos/', {newTodo:newTodo})
+        setList(List.concat([response.data.newTodo]))
+    }
+
+    var ToggleCheck = async (id) => {
         setList(List.map((item) => {
-            if (item.id === id){
+            if (item._id === id){
                 item.checked = !item.checked
                 // console.log(item)
             }
             return item
         }))
+
+        // updating in the server
+        const todoItem = List.filter((item) => (item._id === id))[0]
+
+        await axios.post('http://localhost:4000/Todos/', {todoItem:todoItem})
+        .then((res) => {
+            console.log(res.status)
+        }).catch((error) => {
+            console.log(error)
+        })
+
+        
     }
 
-    var ToggleEdit = (id) => {
+    var ToggleEdit = async (id) => {
+        // get the todo item
+        const todoItem = List.filter((item) => (item._id === id))[0]
+
+        // if edit is set to true then, the edit is done and is ready to update
+        if (todoItem.edit === true){
+            // update the todo item
+            await axios.post('http://localhost:4000/Todos/', {todoItem:todoItem})
+            .then((res) => {
+                console.log(res.status)
+            }).catch((error) => {
+                console.log(error)
+            })
+        }
         setList(List.map((item) => {
-            if (item.id === id){
+            if (item._id === id){
                 item.edit = !item.edit
                 // console.log(item)
             }
@@ -45,7 +86,7 @@ function TodoList() {
 
     var ChangeTitle = (e, id) =>  {
         setList(List.map((item) => {
-            if (item.id === id){
+            if (item._id === id){
                 item.title = e.target.value
                 // console.log(item)
             }
@@ -55,7 +96,7 @@ function TodoList() {
 
     var ChangeBody = (e, id) =>  {
         setList(List.map((item) => {
-            if (item.id === id){
+            if (item._id === id){
                 item.body = e.target.value
                 // console.log(item)
             }
@@ -68,8 +109,8 @@ function TodoList() {
             return (
                 <Col className="gutter-row" span={8}>
                     <TodoItem 
-                        key={item.id} 
-                        id={item.id} 
+                        key={item._id} 
+                        id={item._id} 
                         title={item.title} 
                         body={item.body} 
                         checked={item.checked} 
@@ -84,6 +125,10 @@ function TodoList() {
         })
     }
 
+
+    
+
+
     return (
         <Layout className="layout">
             <Header>
@@ -93,7 +138,7 @@ function TodoList() {
                 <div className="TodoForm">
                     <Form 
                         {...TodoFormLayout}
-                        onFinish = {onFinish}
+                        onFinish = {onAdd}
                     >
                         <h1>Add Item</h1>
                         <Form.Item
@@ -109,9 +154,15 @@ function TodoList() {
                             <Input />
                         </Form.Item>
                         <Form.Item {...ButtonLayout}>
-                            <Button type="primary" htmlType="submit">
-                                Submit
-                            </Button>
+                            <Space>
+                                <Button type="primary" htmlType="submit">
+                                    Add
+                                </Button>
+                                
+                                <Button type="primary" onClick={getAllTodos}>
+                                    Get All Todos
+                                </Button>
+                            </Space>
                         </Form.Item>
                     </Form>
                 </div>
